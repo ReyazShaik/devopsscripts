@@ -1,0 +1,12 @@
+   12  mount -o remount,size=2G /tmp
+   15  df -h
+   16  free -h
+   17  swapon --show
+   18  fallocate -l 2G /swapfile
+   19  chmod 600 /swapfile
+   20  mkswap /swapfile
+   21  swapon /swapfile
+   22  free -h
+   23  swapon --show
+   25  systemctl stop jenkins.service
+   26  systemctl start jenkins.service
