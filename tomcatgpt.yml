@@ -1,0 +1,77 @@
+---
+- name: Setup Apache Tomcat
+  hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Install Java 17 (Amazon Corretto)
+      yum:
+        name: java-17-amazon-corretto
+        state: present
+
+    - name: Download Apache Tomcat
+      get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.35/bin/apache-tomcat-10.1.35.tar.gz
+        dest: /root/apache-tomcat-10.1.35.tar.gz
+        mode: '0644'
+
+    - name: Extract Apache Tomcat
+      unarchive:
+        src: /root/apache-tomcat-10.1.35.tar.gz
+        dest: /root/
+        remote_src: yes
+        creates: /root/apache-tomcat-10.1.35
+
+    - name: Rename Tomcat directory
+      command: mv /root/apache-tomcat-10.1.35 /root/tomcat
+      args:
+        creates: /root/tomcat
+
+    - name: Copy tomcat-users.xml
+      template:
+        src: tomcat-users.xml
+        dest: /root/tomcat/conf/tomcat-users.xml
+        mode: '0644'
+
+    - name: Copy modified context.xml
+      template:
+        src: context.xml
+        dest: /root/tomcat/webapps/manager/META-INF/context.xml
+        mode: '0644'
+
+    - name: Create Tomcat systemd service
+      copy:
+        dest: /etc/systemd/system/tomcat.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Apache Tomcat Server
+          After=network.target
+
+          [Service]
+          Type=forking
+          User=root
+          Group=root
+
+          Environment="JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto"
+          Environment="CATALINA_HOME=/root/tomcat"
+          Environment="CATALINA_BASE=/root/tomcat"
+
+          ExecStart=/root/tomcat/bin/startup.sh
+          ExecStop=/root/tomcat/bin/shutdown.sh
+
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Tomcat
+      systemd:
+        name: tomcat
+        state: started
+        enabled: yes

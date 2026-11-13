@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: .
+    container_name: nginx-lb
+    ports:
+      - "80:80"
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+
+  backend1:
+    image: ghcr.io/benc-uk/python-demoapp
+    container_name: backend1
+    expose:
+      - "5000"
+
+  backend2:
+    image: ghcr.io/benc-uk/python-demoapp
+    container_name: backend2
+    expose:
+      - "5001"
+
+  backend3:
+    image: ghcr.io/benc-uk/python-demoapp
+    container_name: backend3
+    expose:
+      - "5002"
